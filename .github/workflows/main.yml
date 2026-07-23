@@ -3,22 +3,34 @@ name: CI
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - name: Build Android APK
-      uses: ArtemSBulgakov/buildozer-action@v1
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        command: android debug
-        buildozer_version: master
+        python-version: '3.10'
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v3
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libssl-dev libgdbm-dev libffi-dev libbz2-dev
+        pip install --upgrade pip
+        pip install buildozer
+
+    - name: Build with Buildozer
+      run: |
+        yes | buildozer -v android debug
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
       with:
         name: package
         path: bin/*.apk
